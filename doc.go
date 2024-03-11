@@ -1,7 +1,7 @@
 /*
 Package braintree is a client library for Braintree.
 
-Initializing
+# Initializing
 
 Initialize it with API Keys:
 
@@ -11,7 +11,7 @@ Initialize it with an Access Token:
 
 	braintree.NewWithAccessToken(accessToken)
 
-Loggers and HTTP Clients
+# Loggers and HTTP Clients
 
 Optionally configure a logger and HTTP client:
 
@@ -19,7 +19,7 @@ Optionally configure a logger and HTTP client:
 	bt.Logger = log.New(...)
 	bt.HttpClient = ...
 
-Creating Transactions
+# Creating Transactions
 
 Create transactions:
 
@@ -30,7 +30,7 @@ Create transactions:
 		PaymentMethodNonce: braintree.FakeNonceTransactable,
 	})
 
-API Errors
+# API Errors
 
 API errors are intended to be consumed in two ways. One, they can be dealt with as a single unit:
 

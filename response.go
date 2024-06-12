@@ -28,6 +28,22 @@ func (r *Response) entityName() (string, error) {
 	return b.XMLName.Local, nil
 }
 
+func (r *Response) oauthCredentials() (*OAuthCredentials, error) {
+	var n OAuthCredentials
+	if err := xml.Unmarshal(r.Body, &n); err != nil {
+		return nil, err
+	}
+	return &n, nil
+}
+
+func (r *Response) revokeAccessTokenResponse() (*OAuthRevokeToken, error) {
+	var n OAuthRevokeToken
+	if err := xml.Unmarshal(r.Body, &n); err != nil {
+		return nil, err
+	}
+	return &n, nil
+}
+
 func (r *Response) merchantAccount() (*MerchantAccount, error) {
 	var b MerchantAccount
 	if err := xml.Unmarshal(r.Body, &b); err != nil {

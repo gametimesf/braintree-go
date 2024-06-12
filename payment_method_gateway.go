@@ -24,6 +24,17 @@ type PaymentMethodRequestOptions struct {
 	VerificationMerchantAccountId string `xml:"verification-merchant-account-id,omitempty"`
 }
 
+type (
+	PaymentMethodGrant struct {
+		SharedPaymentMethodToken string `xml:"shared_payment_method_token"`
+		AllowVaulting            *bool  `xml:"allow_vaulting,omitempty"`
+	}
+
+	PaymentMethodGrantRequest struct {
+		PaymentMethod PaymentMethodGrant `xml:"payment_method"`
+	}
+)
+
 func (g *PaymentMethodGateway) Create(ctx context.Context, paymentMethodRequest *PaymentMethodRequest) (PaymentMethod, error) {
 	resp, err := g.executeVersion(ctx, "POST", "payment_methods", paymentMethodRequest, apiVersion4)
 	if err != nil {
@@ -67,6 +78,18 @@ func (g *PaymentMethodGateway) Delete(ctx context.Context, token string) error {
 	}
 	switch resp.StatusCode {
 	case 200:
+		return nil
+	}
+	return &invalidResponseError{resp}
+}
+
+func (g *PaymentMethodGateway) Grant(ctx context.Context, req *PaymentMethodGrantRequest) error {
+	resp, err := g.executeVersion(ctx, "POST", "payment_methods/grant", req, apiVersion6)
+	if err != nil {
+		return err
+	}
+	switch resp.StatusCode {
+	case 201:
 		return nil
 	}
 	return &invalidResponseError{resp}

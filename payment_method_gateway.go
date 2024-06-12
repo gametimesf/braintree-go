@@ -83,14 +83,14 @@ func (g *PaymentMethodGateway) Delete(ctx context.Context, token string) error {
 	return &invalidResponseError{resp}
 }
 
-func (g *PaymentMethodGateway) Grant(ctx context.Context, req *PaymentMethodGrantRequest) error {
+func (g *PaymentMethodGateway) Grant(ctx context.Context, req *PaymentMethodGrantRequest) (*PaymentMethodMerchantGrant, error) {
 	resp, err := g.executeVersion(ctx, "POST", "payment_methods/grant", req, apiVersion6)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	switch resp.StatusCode {
 	case 201:
-		return nil
+		return resp.grantResponse()
 	}
-	return &invalidResponseError{resp}
+	return nil, &invalidResponseError{resp}
 }

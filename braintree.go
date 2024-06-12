@@ -188,6 +188,9 @@ func (g *Braintree) WebhookTesting() *WebhookTestingGateway {
 func (g *Braintree) PaymentMethod() *PaymentMethodGateway {
 	return &PaymentMethodGateway{g}
 }
+func (g *Braintree) Oauth() *OAuthGateway {
+	return &OAuthGateway{g}
+}
 
 func (g *Braintree) PaymentMethodNonce() *PaymentMethodNonceGateway {
 	return &PaymentMethodNonceGateway{g}

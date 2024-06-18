@@ -25,13 +25,15 @@ type PaymentMethodRequestOptions struct {
 }
 
 type (
-	PaymentMethodGrant struct {
-		SharedPaymentMethodToken string `xml:"shared_payment_method_token"`
-		AllowVaulting            *bool  `xml:"allow_vaulting,omitempty"`
+	PaymentMethodGrantRequest struct {
+		XMLName                  xml.Name `xml:"payment_method"`
+		SharedPaymentMethodToken string   `xml:"shared_payment_method_token"`
+		AllowVaulting            *bool    `xml:"allow_vaulting,omitempty"`
 	}
 
-	PaymentMethodGrantRequest struct {
-		PaymentMethod PaymentMethodGrant `xml:"payment_method"`
+	PaymentMethodMerchantGrant struct {
+		XMLName string `xml:"payment-method-nonce"`
+		Nonce   string `xml:"nonce"`
 	}
 )
 

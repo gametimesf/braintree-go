@@ -54,7 +54,18 @@ func New(env Environment, merchId, pubKey, privKey string) *Braintree {
 
 // NewWithHttpClient creates a Braintree client with API Keys and a HTTP Client.
 func NewWithHttpClient(env Environment, merchantId, publicKey, privateKey string, client *http.Client) *Braintree {
-	return &Braintree{credentials: newAPIKey(env, merchantId, publicKey, privateKey), HttpClient: client}
+	return &Braintree{credentials: newAPIKey(env, merchantId, publicKey, privateKey, "", ""), HttpClient: client}
+}
+
+// NewV2 creates a Braintree client with API Keys and client credentials.
+// some endpoints require client credentials to be passed in the header.
+func NewV2(env Environment, merchId, pubKey, privKey, clientId, clientSecrets string) *Braintree {
+	return NewWithHttpClientV2(env, merchId, pubKey, privKey, clientId, clientSecrets, defaultClient)
+}
+
+// NewWithHttpClient creates a Braintree client with API Keys and a HTTP Client.
+func NewWithHttpClientV2(env Environment, merchantId, publicKey, privateKey, clientId, clientSecret string, client *http.Client) *Braintree {
+	return &Braintree{credentials: newAPIKey(env, merchantId, publicKey, privateKey, clientId, clientSecret), HttpClient: client}
 }
 
 // NewWithAccessToken creates a Braintree client with an Access Token.
@@ -126,6 +137,69 @@ func (g *Braintree) executeVersion(ctx context.Context, method, path string, xml
 	req.Header.Set("User-Agent", fmt.Sprintf("Braintree Go %s", LibraryVersion))
 	req.Header.Set("X-ApiVersion", fmt.Sprintf("%d", v))
 	req.Header.Set("Authorization", g.credentials.AuthorizationHeader())
+
+	httpClient := g.HttpClient
+	if httpClient == nil {
+		httpClient = defaultClient
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	btr := &Response{
+		Response: resp,
+	}
+	err = btr.unpackBody()
+	if err != nil {
+		return nil, err
+	}
+
+	if g.Logger != nil {
+		g.Logger.Printf("<\n%s", string(btr.Body))
+	}
+
+	err = btr.apiError()
+	if err != nil {
+		return nil, err
+	}
+	return btr, nil
+}
+
+func (g *Braintree) executeBaseVersion(ctx context.Context, method, path string, xmlObj interface{}, v apiVersion) (*Response, error) {
+	var buf bytes.Buffer
+	if xmlObj != nil {
+		xmlBody, err := xml.Marshal(xmlObj)
+		if err != nil {
+			return nil, err
+		}
+		_, err = buf.Write(xmlBody)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	url := g.Environment().BaseURL() + "/" + path
+
+	if g.Logger != nil {
+		g.Logger.Printf("> %s %s\n%s", method, url, buf.String())
+	}
+
+	req, err := http.NewRequest(method, url, &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	req = req.WithContext(ctx)
+
+	req.Header.Set("Content-Type", "application/xml")
+	req.Header.Set("Accept", "application/xml")
+	req.Header.Set("Accept-Encoding", "gzip")
+	req.Header.Set("User-Agent", fmt.Sprintf("Braintree Go %s", LibraryVersion))
+	req.Header.Set("X-ApiVersion", fmt.Sprintf("%d", v))
+	req.Header.Set("Authorization", g.credentials.AuthorizationHeaderWithClientCreds())
 
 	httpClient := g.HttpClient
 	if httpClient == nil {

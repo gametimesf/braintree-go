@@ -11,7 +11,16 @@ type apiKey struct {
 	clientId     string
 }
 
-func newAPIKey(env Environment, merchantID, publicKey, privateKey, clientId, clientSecret string) credentials {
+func newAPIKey(env Environment, merchantID, publicKey, privateKey string) credentials {
+	return apiKey{
+		env:        env,
+		merchantID: merchantID,
+		publicKey:  publicKey,
+		privateKey: privateKey,
+	}
+}
+
+func newAPIKeyV2(env Environment, merchantID, publicKey, privateKey, clientId, clientSecret string) credentials {
 	return apiKey{
 		env:        env,
 		merchantID: merchantID,

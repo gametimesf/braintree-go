@@ -39,3 +39,11 @@ func (t accessToken) MerchantID() string {
 func (t accessToken) AuthorizationHeader() string {
 	return "Bearer " + t.raw
 }
+
+// AuthorizationHeaderWithClientCreds is not supported for access tokens
+// and will panic if called. access tokens are not used for client credentials.
+// This method is only implemented to satisfy the credentials interface.
+// use AuthorizationHeader() instead.
+func (t accessToken) AuthorizationHeaderWithClientCreds() string {
+	panic("not implemented")
+}

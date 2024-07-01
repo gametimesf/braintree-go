@@ -5,3 +5,4 @@ braintree.sublime-project
 .env
 .idea
 .vscode
+.DS_Store

@@ -20,7 +20,7 @@ func newAPIKey(env Environment, merchantID, publicKey, privateKey string) creden
 	}
 }
 
-func newAPIKeyV2(env Environment, merchantID, publicKey, privateKey, clientId, clientSecret string) credentials {
+func newAPIKeyWithCredentials(env Environment, merchantID, publicKey, privateKey, clientId, clientSecret string) credentials {
 	return apiKey{
 		env:        env,
 		merchantID: merchantID,

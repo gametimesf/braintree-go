@@ -57,15 +57,15 @@ func NewWithHttpClient(env Environment, merchantId, publicKey, privateKey string
 	return &Braintree{credentials: newAPIKey(env, merchantId, publicKey, privateKey), HttpClient: client}
 }
 
-// NewV2 creates a Braintree client with API Keys and client credentials.
+// NewWithCredentials creates a Braintree client with API Keys and client credentials.
 // some endpoints require client credentials to be passed in the header.
-func NewV2(env Environment, merchId, pubKey, privKey, clientId, clientSecrets string) *Braintree {
-	return NewWithHttpClientV2(env, merchId, pubKey, privKey, clientId, clientSecrets, defaultClient)
+func NewWithCredentials(env Environment, merchId, pubKey, privKey, clientId, clientSecrets string) *Braintree {
+	return NewHttpClientWithCredentials(env, merchId, pubKey, privKey, clientId, clientSecrets, defaultClient)
 }
 
 // NewWithHttpClient creates a Braintree client with API Keys and a HTTP Client.
-func NewWithHttpClientV2(env Environment, merchantId, publicKey, privateKey, clientId, clientSecret string, client *http.Client) *Braintree {
-	return &Braintree{credentials: newAPIKeyV2(env, merchantId, publicKey, privateKey, clientId, clientSecret), HttpClient: client}
+func NewHttpClientWithCredentials(env Environment, merchantId, publicKey, privateKey, clientId, clientSecret string, client *http.Client) *Braintree {
+	return &Braintree{credentials: newAPIKeyWithCredentials(env, merchantId, publicKey, privateKey, clientId, clientSecret), HttpClient: client}
 }
 
 // NewWithAccessToken creates a Braintree client with an Access Token.

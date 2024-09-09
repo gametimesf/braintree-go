@@ -15,7 +15,7 @@ env:
 before_install:
   # GITHUB_ACCESS_TOKEN for 'gametime-travis-ci' user (defined as env variable on Travis)
   - git config --global url."https://${GITHUB_ACCESS_TOKEN}@github.com/gametimesf".insteadOf "https://github.com/gametimesf"
-  - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
-  - go install github.com/daixiang0/gci@v0.3.4
+  - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+  - go install github.com/daixiang0/gci@latest
 script:
   - make unit

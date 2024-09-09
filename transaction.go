@@ -45,6 +45,7 @@ const (
 	PaymentInstrumentTypePaypalAccount    PaymentInstrumentType = "paypal_account"
 	PaymentInstrumentTypeVenmoAccount     PaymentInstrumentType = "venmo_account"
 	PaymentInstrumentTypeVisaCheckoutCard PaymentInstrumentType = "visa_checkout_card"
+	PaymentInstrumentTypeAffirm           PaymentInstrumentType = "affirm"
 )
 
 type Transaction struct {

@@ -33,6 +33,7 @@ const (
 	TransactionSourceRecurring      TransactionSource = "recurring"
 	TransactionSourceMOTO           TransactionSource = "moto"
 	TransactionSourceMerchant       TransactionSource = "merchant"
+	TransactionSourceUnscheduled    TransactionSource = "unscheduled"
 )
 
 type PaymentInstrumentType string

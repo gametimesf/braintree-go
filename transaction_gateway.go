@@ -250,7 +250,7 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 	var res GraphQLRawResponse[CreateTransactionRiskContextResult]
 	err = json.Unmarshal(resp.Body, &res)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))
 	}
 
 	m, ok := res.Data[keyName]

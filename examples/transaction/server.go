@@ -44,6 +44,7 @@ func createTransaction(w http.ResponseWriter, r *http.Request) {
 
 	bt := braintree.New(
 		braintree.Sandbox,
+		braintree.GraphQLSandbox,
 		os.Getenv("BRAINTREE_MERCH_ID"),
 		os.Getenv("BRAINTREE_PUB_KEY"),
 		os.Getenv("BRAINTREE_PRIV_KEY"),

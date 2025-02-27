@@ -4,6 +4,7 @@ import "encoding/base64"
 
 type apiKey struct {
 	env          Environment
+	graphqlEnv   Environment
 	merchantID   string
 	publicKey    string
 	privateKey   string
@@ -11,18 +12,20 @@ type apiKey struct {
 	clientId     string
 }
 
-func newAPIKey(env Environment, merchantID, publicKey, privateKey string) credentials {
+func newAPIKey(env, graphqlEnv Environment, merchantID, publicKey, privateKey string) credentials {
 	return apiKey{
 		env:        env,
+		graphqlEnv: graphqlEnv,
 		merchantID: merchantID,
 		publicKey:  publicKey,
 		privateKey: privateKey,
 	}
 }
 
-func newAPIKeyWithCredentials(env Environment, merchantID, publicKey, privateKey, clientId, clientSecret string) credentials {
+func newAPIKeyWithCredentials(env, graphqlEnv Environment, merchantID, publicKey, privateKey, clientId, clientSecret string) credentials {
 	return apiKey{
 		env:        env,
+		graphqlEnv: graphqlEnv,
 		merchantID: merchantID,
 		publicKey:  publicKey,
 		privateKey: privateKey,
@@ -35,6 +38,10 @@ func newAPIKeyWithCredentials(env Environment, merchantID, publicKey, privateKey
 
 func (k apiKey) Environment() Environment {
 	return k.env
+}
+
+func (k apiKey) GraphQLEnvironment() Environment {
+	return k.graphqlEnv
 }
 
 func (k apiKey) MerchantID() string {

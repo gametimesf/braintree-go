@@ -30,7 +30,7 @@ func TestSettleTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	prodGateway := New(Production, "my_merchant_id", "my_public_key", "my_private_key")
+	prodGateway := New(Production, GraphQLProduction, "my_merchant_id", "my_public_key", "my_private_key")
 
 	_, err = prodGateway.Testing().Settle(ctx, txn.Id)
 	if err.Error() != "Operation not allowed in production environment" {
@@ -68,7 +68,7 @@ func TestSettlementConfirmTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	prodGateway := New(Production, "my_merchant_id", "my_public_key", "my_private_key")
+	prodGateway := New(Production, GraphQLProduction, "my_merchant_id", "my_public_key", "my_private_key")
 
 	_, err = prodGateway.Testing().SettlementConfirm(ctx, txn.Id)
 	if err.Error() != "Operation not allowed in production environment" {
@@ -106,7 +106,7 @@ func TestSettlementDeclinedTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	prodGateway := New(Production, "my_merchant_id", "my_public_key", "my_private_key")
+	prodGateway := New(Production, GraphQLProduction, "my_merchant_id", "my_public_key", "my_private_key")
 
 	_, err = prodGateway.Testing().SettlementDecline(ctx, txn.Id)
 	if err.Error() != "Operation not allowed in production environment" {
@@ -144,7 +144,7 @@ func TestSettlementPendingTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	prodGateway := New(Production, "my_merchant_id", "my_public_key", "my_private_key")
+	prodGateway := New(Production, GraphQLProduction, "my_merchant_id", "my_public_key", "my_private_key")
 
 	_, err = prodGateway.Testing().SettlementPending(ctx, txn.Id)
 	if err.Error() != "Operation not allowed in production environment" {

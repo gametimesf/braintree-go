@@ -2,6 +2,7 @@ package braintree
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 )
@@ -224,6 +225,41 @@ func (g *TransactionGateway) SearchPage(ctx context.Context, query *SearchQuery,
 	}
 
 	return pageResult, err
+}
+
+func (g *TransactionGateway) CreateTransactionRiskContext(
+	ctx context.Context,
+	req *CreateTransactionRiskContextRequest,
+) (*CreateTransactionRiskContextResult, error) {
+
+	keyName := "createTransactionRiskContext"
+	q := map[string]interface{}{
+		"query": fmt.Sprintf(
+			"mutation ($input: CreateTransactionRiskContextInput!) {%s(input: $input) { clientMetadataId }}",
+			keyName),
+		"variables": map[string]interface{}{
+			"input": req,
+		},
+	}
+
+	resp, err := g.graphqlExecute(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	var res GraphQLRawResponse[CreateTransactionRiskContextResult]
+	err = json.Unmarshal(resp.Body, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	m, ok := res.Data[keyName]
+	if !ok {
+		return nil, fmt.Errorf("response does not contain %s data", keyName)
+	}
+
+	return &m, nil
+
 }
 
 // Search finds transactions matching the search query, returning the first

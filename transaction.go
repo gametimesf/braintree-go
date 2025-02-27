@@ -223,7 +223,8 @@ type Field struct {
 }
 
 type GraphQLRawResponse[T any] struct {
-	Data map[string]T `json:"data"`
+	Data   map[string]T `json:"data"`
+	Errors interface{}  `json:"errors"`
 }
 
 type CreateTransactionRiskContextResult struct {

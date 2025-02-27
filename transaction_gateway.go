@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html"
 )
 
 type TransactionGateway struct {
@@ -248,6 +249,7 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 	}
 
 	var res GraphQLRawResponse[CreateTransactionRiskContextResult]
+	resp.Body = []byte(html.UnescapeString(string(resp.Body)))
 	err = json.Unmarshal(resp.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))

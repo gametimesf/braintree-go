@@ -238,7 +238,7 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 			"mutation ($input: CreateTransactionRiskContextInput!) {%s(input: $input) { clientMetadataId }}",
 			keyName),
 		"variables": map[string]interface{}{
-			"input": req,
+			"input": req.Request(),
 		},
 	}
 

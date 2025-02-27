@@ -140,6 +140,9 @@ func (g *Braintree) graphqlExecute(ctx context.Context, jsonObj interface{}) (*R
 		return nil, err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
+	// date of first using the recommendation from the official doc
+	req.Header.Set("Braintree-Version", "2025-02-26")
 	req.Header.Set("User-Agent", fmt.Sprintf("Braintree Go %s", LibraryVersion))
 	req.Header.Set("Authorization", g.credentials.AuthorizationHeader())
 

@@ -82,10 +82,9 @@ func NewWithAccessToken(accessToken string) (*Braintree, error) {
 
 // Braintree interacts with the Braintree API.
 type Braintree struct {
-	credentials       credentials
-	Logger            *log.Logger
-	HttpClient        *http.Client
-	graphqlHttpClient *http.Client
+	credentials credentials
+	Logger      *log.Logger
+	HttpClient  *http.Client
 }
 
 // Environment returns the current environment.
@@ -113,10 +112,6 @@ func (g *Braintree) execute(ctx context.Context, method, path string, xmlObj int
 }
 
 func (g *Braintree) graphqlExecute(ctx context.Context, jsonObj interface{}) (*Response, error) {
-	if g.graphqlHttpClient == nil {
-		return nil, fmt.Errorf("graphql HTTP client not initialized")
-	}
-
 	var buf bytes.Buffer
 	if jsonObj != nil {
 		jsonBody, err := json.Marshal(jsonObj)
@@ -127,6 +122,11 @@ func (g *Braintree) graphqlExecute(ctx context.Context, jsonObj interface{}) (*R
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	httpClient := g.HttpClient
+	if httpClient == nil {
+		httpClient = defaultClient
 	}
 
 	url := g.GraphQLEnvironment().BaseURL() + "/graphql"
@@ -145,7 +145,7 @@ func (g *Braintree) graphqlExecute(ctx context.Context, jsonObj interface{}) (*R
 
 	req = req.WithContext(ctx)
 
-	resp, err := g.graphqlHttpClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

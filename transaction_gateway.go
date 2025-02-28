@@ -231,8 +231,7 @@ func (g *TransactionGateway) SearchPage(ctx context.Context, query *SearchQuery,
 func (g *TransactionGateway) CreateTransactionRiskContext(
 	ctx context.Context,
 	req *CreateTransactionRiskContextRequest,
-) (*CreateTransactionRiskContextResult, error) {
-
+) (*GraphQLRawResponse[CreateTransactionRiskContextResult], error) {
 	keyName := "createTransactionRiskContext"
 	q := map[string]interface{}{
 		"query": fmt.Sprintf(
@@ -254,13 +253,12 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))
 	}
-	m, ok := res.Data[keyName]
+	_, ok := res.Data[keyName]
 	if !ok {
 		return nil, fmt.Errorf("response does not contain %s data", keyName)
 	}
-	m.RawBody = string(resp.Body)
 
-	return &m, nil
+	return &res, nil
 
 }
 

@@ -223,12 +223,37 @@ type Field struct {
 }
 
 type GraphQLRawResponse[T any] struct {
-	Data   map[string]T `json:"data"`
-	Errors interface{}  `json:"errors"`
+	Extensions struct {
+		RequestID string `json:"requestId"`
+	} `json:"extensions"`
+	Data   map[string]T   `json:"data"`
+	Errors []GraphQLError `json:"errors"`
+}
+
+type GraphQLError struct {
+	Message   string `json:"message"`
+	Locations []struct {
+		Line   int `json:"line"`
+		Column int `json:"column"`
+	} `json:"locations"`
+	Path       []string `json:"path"`
+	Extensions struct {
+		ErrorClass string   `json:"errorClass"`
+		ErrorType  string   `json:"errorType"`
+		InputPath  []string `json:"inputPath"`
+		LegacyCode string   `json:"legacyCode"`
+	} `json:"extensions"`
+}
+
+func (g *GraphQLError) Error() string {
+	return fmt.Sprintf(
+		"%s[%s] %s: (%s)",
+		g.Extensions.ErrorClass,
+		g.Extensions.ErrorType,
+		g.Message, g.Extensions.LegacyCode)
 }
 
 type CreateTransactionRiskContextResult struct {
-	RawBody          string `json:"raw_body"`
 	ClientMetadataId string `json:"clientMetadataId"`
 }
 

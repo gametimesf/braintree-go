@@ -228,6 +228,7 @@ type GraphQLRawResponse[T any] struct {
 }
 
 type CreateTransactionRiskContextResult struct {
+	RawBody          string `json:"raw_body"`
 	ClientMetadataId string `json:"clientMetadataId"`
 }
 

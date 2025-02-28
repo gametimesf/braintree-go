@@ -254,11 +254,11 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))
 	}
-
 	m, ok := res.Data[keyName]
 	if !ok {
 		return nil, fmt.Errorf("response does not contain %s data", keyName)
 	}
+	m.RawBody = string(resp.Body)
 
 	return &m, nil
 

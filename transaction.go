@@ -53,9 +53,9 @@ const (
 	PaymentInstrumentTypeVisaCheckoutCard PaymentInstrumentType = "visa_checkout_card"
 )
 
-type graphQLMethod string
+type GraphQLMethod string
 
-const createTransactionRiskContext graphQLMethod = "createTransactionRiskContext"
+const CreateTransactionRiskContext GraphQLMethod = "createTransactionRiskContext"
 
 type DeliveryMethod string
 
@@ -175,11 +175,15 @@ type CreateTransactionRiskContextRequest struct {
 	CustomIntDataOne int `json:"cd_int_one"`
 }
 
+func (c *CreateTransactionRiskContextRequest) GraphQLMethod() GraphQLMethod {
+	return CreateTransactionRiskContext
+}
+
 func (c *CreateTransactionRiskContextRequest) GraphQLRequest() *GraphQLRequest {
 	return &GraphQLRequest{
 		Query: fmt.Sprintf(
 			"mutation ($input: CreateTransactionRiskContextInput!) {%s(input: $input) { clientMetadataId }}",
-			createTransactionRiskContext),
+			c.GraphQLMethod()),
 		Variables: map[string]interface{}{
 			"input": map[string]interface{}{
 				"riskContext": map[string]interface{}{

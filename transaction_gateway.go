@@ -234,7 +234,7 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 ) (*GraphQLResponse[CreateTransactionRiskContextResult], error) {
 	reqBody, err := req.GraphQLRequest().Buffer()
 	if err != nil {
-		return nil, fmt.Errorf("can't create request body (%s): %w", createTransactionRiskContext, err)
+		return nil, fmt.Errorf("can't create request body (%s): %w", req.GraphQLMethod(), err)
 	}
 
 	resp, err := g.graphqlExecute(ctx, reqBody)
@@ -249,9 +249,9 @@ func (g *TransactionGateway) CreateTransactionRiskContext(
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))
 	}
-	_, ok := res.Data[string(createTransactionRiskContext)]
+	_, ok := res.Data[string(req.GraphQLMethod())]
 	if !ok {
-		return nil, fmt.Errorf("response does not contain %s data", createTransactionRiskContext)
+		return nil, fmt.Errorf("response does not contain %s data", req.GraphQLMethod())
 	}
 
 	return &res, nil

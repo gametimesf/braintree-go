@@ -1,6 +1,8 @@
 package braintree
 
 import (
+	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"reflect"
@@ -49,6 +51,19 @@ const (
 	PaymentInstrumentTypePaypalAccount    PaymentInstrumentType = "paypal_account"
 	PaymentInstrumentTypeVenmoAccount     PaymentInstrumentType = "venmo_account"
 	PaymentInstrumentTypeVisaCheckoutCard PaymentInstrumentType = "visa_checkout_card"
+)
+
+type graphQLMethod string
+
+const createTransactionRiskContext graphQLMethod = "createTransactionRiskContext"
+
+type DeliveryMethod string
+
+const (
+	EmailDeliveryMethod       DeliveryMethod = "email"
+	PhoneDeliveryMethod       DeliveryMethod = "phone"
+	VenuePickupDeliveryMethod DeliveryMethod = "venue_pickup"
+	KioskPickupDeliveryMethod DeliveryMethod = "kiosk_pickup"
 )
 
 type Transaction struct {
@@ -145,7 +160,7 @@ type CreateTransactionRiskContextRequest struct {
 	SenderCreatedDate string `json:"sender_create_date"`  //value example:2023-09-06T14:38:41Z
 
 	// Delivery Information – Required for intangible transactions only; otherwise, optional.
-	DeliveryMethod string `json:"dg_delivery_method"` //value example: {email, phone, venue_pickup, kiosk_pickup} // TODO modify type to enum
+	DeliveryMethod DeliveryMethod `json:"dg_delivery_method"` //value example: email @see DeliveryMethod
 
 	// Merchant Custom Data - These fields are optional. Include them only if applicable.
 	// CustomStrDataOne Free text field (suggested data: Date of the event, in ISO 8601)
@@ -160,10 +175,17 @@ type CreateTransactionRiskContextRequest struct {
 	CustomIntDataOne int `json:"cd_int_one"`
 }
 
-func (c *CreateTransactionRiskContextRequest) Request() map[string]interface{} {
-	return map[string]interface{}{
-		"riskContext": map[string]interface{}{
-			"fields": c.getFields(true),
+func (c *CreateTransactionRiskContextRequest) GraphQLRequest() *GraphQLRequest {
+	return &GraphQLRequest{
+		Query: fmt.Sprintf(
+			"mutation ($input: CreateTransactionRiskContextInput!) {%s(input: $input) { clientMetadataId }}",
+			createTransactionRiskContext),
+		Variables: map[string]interface{}{
+			"input": map[string]interface{}{
+				"riskContext": map[string]interface{}{
+					"fields": c.getFields(true),
+				},
+			},
 		},
 	}
 }
@@ -222,7 +244,27 @@ type Field struct {
 	Value interface{} `json:"value"`
 }
 
-type GraphQLRawResponse[T any] struct {
+type GraphQLRequest struct {
+	Query     string                 `json:"query"`
+	Variables map[string]interface{} `json:"variables"`
+}
+
+func (g *GraphQLRequest) Buffer() (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+
+	jsonBody, err := json.Marshal(g)
+	if err != nil {
+		return nil, err
+	}
+	_, err = buf.Write(jsonBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
+}
+
+type GraphQLResponse[T any] struct {
 	Extensions struct {
 		RequestID string `json:"requestId"`
 	} `json:"extensions"`

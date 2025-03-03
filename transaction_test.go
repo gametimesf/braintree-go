@@ -1,7 +1,6 @@
 package braintree
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -9,25 +8,27 @@ import (
 
 func TestCreateTransactionRiskContextRequest(t *testing.T) {
 	tmp := CreateTransactionRiskContextRequest{}
-	emptyBody := `{"riskContext":{"fields":[]}}`
+	emptyBody := `{"query":"mutation ($input: CreateTransactionRiskContextInput!) {createTransactionRiskContext(input: $input) { clientMetadataId }}","variables":{"input":{"riskContext":{"fields":[]}}}}`
 
-	bts, err := json.Marshal(tmp.Request())
+	bts, err := tmp.GraphQLRequest().Buffer()
 	if err != nil {
 		t.Fatalf("process of build request is not success")
 	}
-	if emptyBody != string(bts) {
-		t.Fatalf("process of build request is not compare")
+	if emptyBody != bts.String() {
+		t.Fatalf("process of build request is not compare, %s", bts.String())
 	}
 
 	tmp.SenderCreatedDate = time.Now().String()
 	body := fmt.Sprintf(
-		"{\"riskContext\":{\"fields\":[{\"name\":\"sender_create_date\",\"value\":\"%s\"}]}}",
-		tmp.SenderCreatedDate)
-	bts, err = json.Marshal(tmp.Request())
+		`{"query":"mutation ($input: CreateTransactionRiskContextInput!) {createTransactionRiskContext(input: $input) { clientMetadataId }}","variables":{"input":{"riskContext":{"fields":[{"name":"sender_create_date","value":"%s"}]}}}}`,
+		tmp.SenderCreatedDate,
+	)
+
+	bts, err = tmp.GraphQLRequest().Buffer()
 	if err != nil {
 		t.Fatalf("process of build request is not success")
 	}
-	if body != string(bts) {
-		t.Fatalf("process of build request is not compare, req=%s", string(bts))
+	if body != bts.String() {
+		t.Fatalf("process of build request is not compare, req=%s", bts.String())
 	}
 }

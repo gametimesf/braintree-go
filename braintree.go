@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -111,19 +110,7 @@ func (g *Braintree) execute(ctx context.Context, method, path string, xmlObj int
 	return g.executeVersion(ctx, method, path, xmlObj, apiVersion3)
 }
 
-func (g *Braintree) graphqlExecute(ctx context.Context, jsonObj interface{}) (*Response, error) {
-	var buf bytes.Buffer
-	if jsonObj != nil {
-		jsonBody, err := json.Marshal(jsonObj)
-		if err != nil {
-			return nil, err
-		}
-		_, err = buf.Write(jsonBody)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func (g *Braintree) graphqlExecute(ctx context.Context, buf *bytes.Buffer) (*Response, error) {
 	httpClient := g.HttpClient
 	if httpClient == nil {
 		httpClient = defaultClient
@@ -131,11 +118,11 @@ func (g *Braintree) graphqlExecute(ctx context.Context, jsonObj interface{}) (*R
 
 	url := g.GraphQLEnvironment().BaseURL() + "/graphql"
 
-	if g.Logger != nil {
+	if g.Logger != nil && buf != nil {
 		g.Logger.Printf("> %s %s\n%s", http.MethodPost, url, buf.String())
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, &buf)
+	req, err := http.NewRequest(http.MethodPost, url, buf)
 	if err != nil {
 		return nil, err
 	}

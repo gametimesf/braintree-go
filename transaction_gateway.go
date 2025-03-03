@@ -231,31 +231,27 @@ func (g *TransactionGateway) SearchPage(ctx context.Context, query *SearchQuery,
 func (g *TransactionGateway) CreateTransactionRiskContext(
 	ctx context.Context,
 	req *CreateTransactionRiskContextRequest,
-) (*GraphQLRawResponse[CreateTransactionRiskContextResult], error) {
-	keyName := "createTransactionRiskContext"
-	q := map[string]interface{}{
-		"query": fmt.Sprintf(
-			"mutation ($input: CreateTransactionRiskContextInput!) {%s(input: $input) { clientMetadataId }}",
-			keyName),
-		"variables": map[string]interface{}{
-			"input": req.Request(),
-		},
+) (*GraphQLResponse[CreateTransactionRiskContextResult], error) {
+	reqBody, err := req.GraphQLRequest().Buffer()
+	if err != nil {
+		return nil, fmt.Errorf("can't create request body (%s): %w", createTransactionRiskContext, err)
 	}
 
-	resp, err := g.graphqlExecute(ctx, q)
+	resp, err := g.graphqlExecute(ctx, reqBody)
 	if err != nil {
 		return nil, err
 	}
 
-	var res GraphQLRawResponse[CreateTransactionRiskContextResult]
+	var res GraphQLResponse[CreateTransactionRiskContextResult]
+	//cleaning up unsupported characters
 	resp.Body = []byte(html.UnescapeString(string(resp.Body)))
 	err = json.Unmarshal(resp.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))
 	}
-	_, ok := res.Data[keyName]
+	_, ok := res.Data[string(createTransactionRiskContext)]
 	if !ok {
-		return nil, fmt.Errorf("response does not contain %s data", keyName)
+		return nil, fmt.Errorf("response does not contain %s data", createTransactionRiskContext)
 	}
 
 	return &res, nil

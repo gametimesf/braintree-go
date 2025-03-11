@@ -48,24 +48,24 @@ var (
 )
 
 // New creates a Braintree client with API Keys.
-func New(env Environment, merchId, pubKey, privKey string) *Braintree {
-	return NewWithHttpClient(env, merchId, pubKey, privKey, defaultClient)
+func New(env, graphqlEnv Environment, merchId, pubKey, privKey string) *Braintree {
+	return NewWithHttpClient(env, graphqlEnv, merchId, pubKey, privKey, defaultClient)
 }
 
 // NewWithHttpClient creates a Braintree client with API Keys and a HTTP Client.
-func NewWithHttpClient(env Environment, merchantId, publicKey, privateKey string, client *http.Client) *Braintree {
-	return &Braintree{credentials: newAPIKey(env, merchantId, publicKey, privateKey), HttpClient: client}
+func NewWithHttpClient(env, graphqlEnv Environment, merchantId, publicKey, privateKey string, client *http.Client) *Braintree {
+	return &Braintree{credentials: newAPIKey(env, graphqlEnv, merchantId, publicKey, privateKey), HttpClient: client}
 }
 
 // NewWithCredentials creates a Braintree client with API Keys and client credentials.
 // some endpoints require client credentials to be passed in the header.
-func NewWithCredentials(env Environment, merchId, pubKey, privKey, clientId, clientSecrets string) *Braintree {
-	return NewHttpClientWithCredentials(env, merchId, pubKey, privKey, clientId, clientSecrets, defaultClient)
+func NewWithCredentials(env, graphqlEnv Environment, merchId, pubKey, privKey, clientId, clientSecrets string) *Braintree {
+	return NewHttpClientWithCredentials(env, graphqlEnv, merchId, pubKey, privKey, clientId, clientSecrets, defaultClient)
 }
 
 // NewWithHttpClient creates a Braintree client with API Keys and a HTTP Client.
-func NewHttpClientWithCredentials(env Environment, merchantId, publicKey, privateKey, clientId, clientSecret string, client *http.Client) *Braintree {
-	return &Braintree{credentials: newAPIKeyWithCredentials(env, merchantId, publicKey, privateKey, clientId, clientSecret), HttpClient: client}
+func NewHttpClientWithCredentials(env, graphqlEnv Environment, merchantId, publicKey, privateKey, clientId, clientSecret string, client *http.Client) *Braintree {
+	return &Braintree{credentials: newAPIKeyWithCredentials(env, graphqlEnv, merchantId, publicKey, privateKey, clientId, clientSecret), HttpClient: client}
 }
 
 // NewWithAccessToken creates a Braintree client with an Access Token.
@@ -91,6 +91,11 @@ func (g *Braintree) Environment() Environment {
 	return g.credentials.Environment()
 }
 
+// GraphQLEnvironment returns the current environment.
+func (g *Braintree) GraphQLEnvironment() Environment {
+	return g.credentials.GraphQLEnvironment()
+}
+
 // MerchantID returns the current merchant id.
 func (g *Braintree) MerchantID() string {
 	return g.credentials.MerchantID()
@@ -103,6 +108,56 @@ func (g *Braintree) MerchantURL() string {
 
 func (g *Braintree) execute(ctx context.Context, method, path string, xmlObj interface{}) (*Response, error) {
 	return g.executeVersion(ctx, method, path, xmlObj, apiVersion3)
+}
+
+func (g *Braintree) graphqlExecute(ctx context.Context, buf *bytes.Buffer) (*Response, error) {
+	httpClient := g.HttpClient
+	if httpClient == nil {
+		httpClient = defaultClient
+	}
+
+	url := g.GraphQLEnvironment().BaseURL() + "/graphql"
+
+	if g.Logger != nil && buf != nil {
+		g.Logger.Printf("> %s %s\n%s", http.MethodPost, url, buf.String())
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	// date of first using the recommendation from the official doc
+	req.Header.Set("Braintree-Version", "2025-02-26")
+	req.Header.Set("User-Agent", fmt.Sprintf("Braintree Go %s", LibraryVersion))
+	req.Header.Set("Authorization", g.credentials.AuthorizationHeader())
+
+	req = req.WithContext(ctx)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	btr := &Response{
+		Response: resp,
+	}
+	err = btr.unpackBody()
+	if err != nil {
+		return nil, err
+	}
+
+	if g.Logger != nil {
+		g.Logger.Printf("<\n%s", string(btr.Body))
+	}
+
+	err = btr.apiError()
+	if err != nil {
+		return nil, err
+	}
+	return btr, nil
 }
 
 func (g *Braintree) executeVersion(ctx context.Context, method, path string, xmlObj interface{}, v apiVersion) (*Response, error) {
@@ -262,6 +317,7 @@ func (g *Braintree) WebhookTesting() *WebhookTestingGateway {
 func (g *Braintree) PaymentMethod() *PaymentMethodGateway {
 	return &PaymentMethodGateway{g}
 }
+
 func (g *Braintree) Oauth() *OAuthGateway {
 	return &OAuthGateway{g}
 }

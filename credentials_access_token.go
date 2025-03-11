@@ -8,6 +8,7 @@ import (
 type accessToken struct {
 	raw        string
 	env        Environment
+	graphqlEnv Environment
 	merchantID string
 }
 
@@ -20,9 +21,15 @@ func newAccessToken(accessTokenStr string) (credentials, error) {
 	if err != nil {
 		return nil, errors.New("access token is for unsupported environment, " + err.Error())
 	}
+	graphqlEnv, err := GraphQLEnvironmentFromName(parts[1])
+	if err != nil {
+		return nil, errors.New("access token is for unsupported graphQL environment, " + err.Error())
+	}
+
 	t := accessToken{
 		raw:        accessTokenStr,
 		env:        env,
+		graphqlEnv: graphqlEnv,
 		merchantID: parts[2],
 	}
 	return t, nil
@@ -30,6 +37,10 @@ func newAccessToken(accessTokenStr string) (credentials, error) {
 
 func (t accessToken) Environment() Environment {
 	return t.env
+}
+
+func (t accessToken) GraphQLEnvironment() Environment {
+	return t.graphqlEnv
 }
 
 func (t accessToken) MerchantID() string {

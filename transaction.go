@@ -1,7 +1,12 @@
 package braintree
 
 import (
+	"bytes"
+	"encoding/json"
 	"encoding/xml"
+	"fmt"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/gametimesf/braintree-go/customfields"
@@ -46,6 +51,19 @@ const (
 	PaymentInstrumentTypePaypalAccount    PaymentInstrumentType = "paypal_account"
 	PaymentInstrumentTypeVenmoAccount     PaymentInstrumentType = "venmo_account"
 	PaymentInstrumentTypeVisaCheckoutCard PaymentInstrumentType = "visa_checkout_card"
+)
+
+type GraphQLMethod string
+
+const CreateTransactionRiskContext GraphQLMethod = "createTransactionRiskContext"
+
+type DeliveryMethod string
+
+const (
+	EmailDeliveryMethod       DeliveryMethod = "email"
+	PhoneDeliveryMethod       DeliveryMethod = "phone"
+	VenuePickupDeliveryMethod DeliveryMethod = "venue_pickup"
+	KioskPickupDeliveryMethod DeliveryMethod = "kiosk_pickup"
 )
 
 type Transaction struct {
@@ -130,6 +148,159 @@ type TransactionRequest struct {
 	PurchaseOrderNumber      string                      `xml:"purchase-order-number,omitempty"`
 	TransactionSource        TransactionSource           `xml:"transaction-source,omitempty"`
 	LineItems                TransactionLineItemRequests `xml:"line-items,omitempty"`
+}
+
+type CreateTransactionRiskContextRequest struct {
+	SenderAccountId   string `json:"sender_account_id"`   //value example:A12345N343
+	SenderFirstName   string `json:"sender_first_name"`   //value example:John
+	SenderLastName    string `json:"sender_last_name"`    //value example:Smith
+	SenderEmail       string `json:"sender_email"`        //value example:john@demo.com
+	SenderPhone       string `json:"sender_phone"`        //value example: (402) 555 5555
+	SenderCountryCode string `json:"sender_country_code"` //value example:US
+	SenderCreatedDate string `json:"sender_create_date"`  //value example:2023-09-06T14:38:41Z
+
+	// Delivery Information – Required for intangible transactions only; otherwise, optional.
+	DeliveryMethod DeliveryMethod `json:"dg_delivery_method"` //value example: email @see DeliveryMethod
+
+	// Merchant Custom Data - These fields are optional. Include them only if applicable.
+	// CustomStrDataOne Free text field (suggested data: Date of the event, in ISO 8601)
+	CustomStrDataOne string `json:"cd_string_one"`
+	// CustomStrDataTwo
+	// Free text field (suggested data: Type of event; for example, music, arts_and_theater, family,
+	// sports, miscellaneous, clubs, special_events, fairs_and_exhibitions, festivals, comedy.)
+	CustomStrDataTwo string `json:"cd_string_two"`
+	// CustomIntDataOne
+	// Free number field (suggested data: The total number of tickets that the buyer purchased within
+	// a single transaction. )
+	CustomIntDataOne int `json:"cd_int_one"`
+}
+
+func (c *CreateTransactionRiskContextRequest) GraphQLMethod() GraphQLMethod {
+	return CreateTransactionRiskContext
+}
+
+func (c *CreateTransactionRiskContextRequest) GraphQLRequest() *GraphQLRequest {
+	return &GraphQLRequest{
+		Query: fmt.Sprintf(
+			"mutation ($input: CreateTransactionRiskContextInput!) {%s(input: $input) { clientMetadataId }}",
+			c.GraphQLMethod()),
+		Variables: map[string]interface{}{
+			"input": map[string]interface{}{
+				"riskContext": map[string]interface{}{
+					"fields": c.getFields(true),
+				},
+			},
+		},
+	}
+}
+
+func (c *CreateTransactionRiskContextRequest) getFields(skipEmpty bool) []Field {
+	if c == nil {
+		return []Field{}
+	}
+
+	fields, _ := getFiles(c, "json", skipEmpty)
+	return fields
+}
+
+func isZeroOfUnderlyingType(x interface{}) bool {
+	return x == reflect.Zero(reflect.TypeOf(x)).Interface()
+}
+
+func getFiles(s any, tag string, skipEmpty bool) ([]Field, error) {
+	rt := reflect.TypeOf(s)
+	rv := reflect.ValueOf(s)
+
+	switch rt.Kind() {
+	case reflect.Pointer:
+		rt = reflect.ValueOf(s).Elem().Type()
+		if rt.Kind() != reflect.Struct {
+			return nil, fmt.Errorf("expected struct type, got %s", rt.Kind().String())
+		}
+		rv = reflect.ValueOf(s).Elem()
+	case reflect.Struct:
+	default:
+		return nil, fmt.Errorf("expected struct type, got %s", rt.Kind().String())
+	}
+
+	var fields = make([]Field, 0, rt.NumField())
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+
+		value, exist := f.Tag.Lookup(tag)
+		if exist {
+			if skipEmpty && isZeroOfUnderlyingType(rv.Field(i).Interface()) {
+				continue
+			}
+			value = strings.Split(value, ",")[0] // use split to ignore tag "options" like omitempty, etc.
+			fields = append(fields, Field{
+				Name:  value,
+				Value: rv.Field(i).Interface(),
+			})
+		}
+	}
+
+	return fields, nil
+}
+
+type Field struct {
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
+}
+
+type GraphQLRequest struct {
+	Query     string                 `json:"query"`
+	Variables map[string]interface{} `json:"variables"`
+}
+
+func (g *GraphQLRequest) Buffer() (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+
+	jsonBody, err := json.Marshal(g)
+	if err != nil {
+		return nil, err
+	}
+	_, err = buf.Write(jsonBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
+}
+
+type GraphQLResponse[T any] struct {
+	Extensions struct {
+		RequestID string `json:"requestId"`
+	} `json:"extensions"`
+	Data   map[string]T   `json:"data"`
+	Errors []GraphQLError `json:"errors"`
+}
+
+type GraphQLError struct {
+	Message   string `json:"message"`
+	Locations []struct {
+		Line   int `json:"line"`
+		Column int `json:"column"`
+	} `json:"locations"`
+	Path       []string `json:"path"`
+	Extensions struct {
+		ErrorClass string   `json:"errorClass"`
+		ErrorType  string   `json:"errorType"`
+		InputPath  []string `json:"inputPath"`
+		LegacyCode string   `json:"legacyCode"`
+	} `json:"extensions"`
+}
+
+func (g *GraphQLError) Error() string {
+	return fmt.Sprintf(
+		"%s[%s] %s: (%s)",
+		g.Extensions.ErrorClass,
+		g.Extensions.ErrorType,
+		g.Message, g.Extensions.LegacyCode)
+}
+
+type CreateTransactionRiskContextResult struct {
+	ClientMetadataId string `json:"clientMetadataId"`
 }
 
 type TransactionRefundRequest struct {

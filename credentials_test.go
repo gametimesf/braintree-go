@@ -13,7 +13,7 @@ func TestCredentials(t *testing.T) {
 		ExpectedAuthorizationHeader string
 	}{
 		{
-			newAPIKey(Development, "development_merchant_id", "integration_public_key", "integration_private_key"),
+			newAPIKey(Development, GraphQLDevelopment, "development_merchant_id", "integration_public_key", "integration_private_key"),
 			Development,
 			"development_merchant_id",
 			"Basic aW50ZWdyYXRpb25fcHVibGljX2tleTppbnRlZ3JhdGlvbl9wcml2YXRlX2tleQ==",

@@ -2,8 +2,10 @@ package braintree
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html"
 )
 
 type TransactionGateway struct {
@@ -224,6 +226,36 @@ func (g *TransactionGateway) SearchPage(ctx context.Context, query *SearchQuery,
 	}
 
 	return pageResult, err
+}
+
+func (g *TransactionGateway) CreateTransactionRiskContext(
+	ctx context.Context,
+	req *CreateTransactionRiskContextRequest,
+) (*GraphQLResponse[CreateTransactionRiskContextResult], error) {
+	reqBody, err := req.GraphQLRequest().Buffer()
+	if err != nil {
+		return nil, fmt.Errorf("can't create request body (%s): %w", req.GraphQLMethod(), err)
+	}
+
+	resp, err := g.graphqlExecute(ctx, reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var res GraphQLResponse[CreateTransactionRiskContextResult]
+	//cleaning up unsupported characters
+	resp.Body = []byte(html.UnescapeString(string(resp.Body)))
+	err = json.Unmarshal(resp.Body, &res)
+	if err != nil {
+		return nil, fmt.Errorf("can't unmarshal CreateTransactionRiskContextResult: %w, body: %s", err, string(resp.Body))
+	}
+	_, ok := res.Data[string(req.GraphQLMethod())]
+	if !ok {
+		return nil, fmt.Errorf("response does not contain %s data", req.GraphQLMethod())
+	}
+
+	return &res, nil
+
 }
 
 // Search finds transactions matching the search query, returning the first
